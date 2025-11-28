@@ -20,7 +20,7 @@ main proc
     int 21h
     sub al, '0'      ; حول ASCII لرقم حقيقي
     mov bl, 2
-    xor ah, ah
+    mov ah, 0
     div bl          
 
     cmp ah, 0
