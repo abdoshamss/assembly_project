@@ -1,45 +1,75 @@
 .model small
 .stack 100h
+
 .data
-msg1 db "Enter a number (0-9): $"
-even_msg db 0Ah,0Dh,"The number is Even$"
-odd_msg db 0Ah,0Dh,"The number is Odd$"
+    msg_start db 'Get Ready...',13,10,'$'
+    msg_press db 'NOW!',13,10,'$'
+    msg_time  db 'Your reaction time: ',0
+    time_buf  db '00000 ms',13,10,'$'
 
 .code
-main proc
-    mov ax, @data
-    mov ds, ax
+    start:      
+                mov  ax,@data
+                mov  ds,ax
 
-    ; اطبع رسالة الادخال
-    mov dx, offset msg1
-    mov ah, 09h
-    int 21h
+    main_loop:  
+                lea  dx,msg_start    ; GET READY...
+                mov  ah,09h
+                int  21h
 
-    ; اقرأ رقم من المستخدم
-    mov ah, 01h
-    int 21h
-    sub al, '0'      ; حول ASCII لرقم حقيقي
-    mov bl, 2
-    mov ah, 0
-    div bl          
+                mov  cx,1000
+    delay_outer:
+                mov  dx,4000
+    delay_inner:
+                dec  dx
+                jnz  delay_inner
+                loop delay_outer
 
-    cmp ah, 0
-    je is_even
+                lea  dx,msg_press    ; NOW!
+                mov  ah,09h
+                int  21h
 
-is_odd:
-    mov dx, offset odd_msg
-    mov ah, 09h
-    int 21h
-    jmp exit_prog
+                mov  ah,00h
+                int  1Ah
+                mov  bx,dx
 
-is_even:
-    mov dx, offset even_msg
-    mov ah, 09h
-    int 21h
+    wait_key:   
+                mov  ah,01h
+                int  16h
+                jz   wait_key
 
-exit_prog:
-    mov ah, 4Ch
-    int 21h
+                mov  ah,00h
+                int  1Ah
+                mov  dx,dx
 
-main endp
-end main
+                sub  dx,bx
+                mov  ax,dx
+                mov  bx,55
+                mul  bx
+
+                lea  di,time_buf
+                call PrintNumber
+
+                lea  dx,time_buf
+                mov  ah,09h
+                int  21h
+
+                mov  ah,00h
+                int  16h
+                jmp  main_loop
+
+PrintNumber proc
+                mov  cx,5
+                add  di,4
+    print_digit:
+                xor  dx,dx
+                mov  bx,10
+                div  bx
+                add  dl,'0'
+                mov  [di],dl
+                dec  di
+                loop print_digit
+                ret
+PrintNumber endp
+
+end start
